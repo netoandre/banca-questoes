@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1794328933034,
+      "tag": "0000_create_exam_manager",
+      "breakpoints": true
+    }
+  ]
 }
