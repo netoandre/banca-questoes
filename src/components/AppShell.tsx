@@ -1,12 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { BookOpen, FileText, LogOut, Users } from "lucide-react";
+import { BookOpen, LogOut, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const links = [
   { to: "/questoes", label: "Questões", icon: BookOpen },
-  { to: "/provas", label: "Provas", icon: FileText },
   { to: "/turmas", label: "Turmas", icon: Users },
 ] as const;
 
