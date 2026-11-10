@@ -27,7 +27,7 @@ export function shuffle<T>(arr: T[], rand: () => number = Math.random): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+    const t = a[i] as T; a[i] = a[j] as T; a[j] = t;
   }
   return a;
 }
@@ -50,8 +50,8 @@ export function buildVersion(questions: Question[], rand: () => number = Math.ra
       const pos = q.correct_index == null ? -1 : idx.indexOf(q.correct_index);
       return {
         number: i + 1, question_id: q.id, type: q.type, statement: q.statement,
-        options: idx.map((k) => q.options[k]),
-        correct_letter: pos >= 0 ? LETTERS[pos] : null,
+        options: idx.map((k) => q.options[k] ?? ""),
+        correct_letter: pos >= 0 ? (LETTERS[pos] ?? null) : null,
         answer_key: q.answer_key, weight: Number(q.weight),
       };
     }

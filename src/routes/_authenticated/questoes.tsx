@@ -157,7 +157,7 @@ function ImportDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
     setBusy(true);
     const { error } = await supabase.from("questions").insert(drafts);
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(`${drafts.length} questões salvas`);
     setDrafts(null); setText(""); onOpenChange(false); onDone();
   }
