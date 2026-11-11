@@ -14,6 +14,8 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "Entre ou crie sua conta para gerenciar suas provas." },
       { property: "og:title", content: "Entrar — Banca" },
       { property: "og:description", content: "Entre ou crie sua conta para gerenciar suas provas." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AuthPage,

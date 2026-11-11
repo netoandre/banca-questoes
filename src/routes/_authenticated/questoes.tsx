@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/questoes")({
-  head: () => ({ meta: [{ title: "Banco de questões — Banca" }, { name: "description", content: "Seu banco de questões com tags." }] }),
+  head: () => ({ meta: [{ title: "Banco de questões — Banca" }, { name: "description", content: "Seu banco de questões com tags." }, { property: "og:title", content: "Banco de questões — Banca" }, { property: "og:description", content: "Cadastre, edite e adapte questões com tags e gabarito." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(questionsQuery),
   component: Questoes,
 });

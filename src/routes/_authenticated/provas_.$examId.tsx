@@ -35,7 +35,7 @@ function ExamDetail() {
     mutationFn: async () => {
       const labels = Array.from({ length: count }, (_, i) => `${LETTERS[i]}${versions.length ? ` · lote ${versions.length + 1}` : ""}`);
       const rows = generateExamVersions(examId, exam.question_ids, questions, labels);
-      return must(await supabase.from("exam_versions").insert(rows).select("*")) as unknown as VersionRow[];
+      return must(await supabase.from("exam_versions").insert(rows.map(row => ({ ...row, items: row.items.map(item => ({ ...item })) }))).select("*")) as unknown as VersionRow[];
     },
     onSuccess: async rows => { await qc.invalidateQueries({ queryKey: ["versions", examId] }); setActiveId(rows[0]?.id ?? ""); setShowKey(false); toast.success("Versões e gabaritos salvos"); },
     onError: e => toast.error(e.message),

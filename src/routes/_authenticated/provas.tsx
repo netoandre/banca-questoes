@@ -24,7 +24,7 @@ function Provas() {
   const [draft, setDraft] = useState<ExamDraft | null>(null);
   const [search, setSearch] = useState(""); const [classId, setClassId] = useState("");
   const create = useMutation({
-    mutationFn: async () => { if (!draft) throw new Error("Preencha a avaliação."); return must(await supabase.from("exams").insert({ ...draft, title: draft.title.trim() }).select("id").single()); },
+    mutationFn: async () => { if (!draft) throw new Error("Preencha a avaliação."); const row = must(await supabase.from("exams").insert({ ...draft, title: draft.title.trim() }).select("id").single()); if (!row) throw new Error("Não foi possível recuperar a prova salva."); return row; },
     onSuccess: async row => { await qc.invalidateQueries({ queryKey: ["exams"] }); setDraft(null); toast.success("Prova criada"); navigate({ to: "/provas/$examId", params: { examId: row.id } }); },
     onError: e => toast.error(e.message),
   });
