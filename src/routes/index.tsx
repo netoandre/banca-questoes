@@ -9,6 +9,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Cole suas questões, a IA separa enunciado, alternativas e gabarito. Monte provas A e B embaralhadas e copie para o Word." },
       { property: "og:title", content: "Banca — monte provas embaralhadas com gabarito" },
       { property: "og:description", content: "Banco de questões com IA, provas A/B embaralhadas e versões adaptadas." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Index,

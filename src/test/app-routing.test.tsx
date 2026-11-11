@@ -14,4 +14,12 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+
+  it("matches the exam list and standalone detail page", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    expect(router.matchRoutes("/provas").at(-1)?.routeId).toBe("/_authenticated/provas");
+    const matches = router.matchRoutes("/provas/example");
+    expect(matches.at(-1)?.routeId).toBe("/_authenticated/provas_/$examId");
+    expect(matches.map(m => m.routeId)).not.toContain("/_authenticated/provas");
+  });
 });

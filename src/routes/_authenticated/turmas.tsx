@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_authenticated/turmas")({
-  head: () => ({ meta: [{ title: "Turmas — Banca" }, { name: "description", content: "Suas turmas por semestre." }] }),
+  head: () => ({ meta: [{ title: "Turmas — Banca" }, { name: "description", content: "Suas turmas por semestre." }, { property: "og:title", content: "Turmas — Banca" }, { property: "og:description", content: "Organize suas turmas por semestre." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(classesQuery),
   component: Turmas,
 });

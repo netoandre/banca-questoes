@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedProvasRouteImport } from './routes/_authenticated/provas'
 import { Route as AuthenticatedQuestoesRouteImport } from './routes/_authenticated/questoes'
 import { Route as AuthenticatedTurmasRouteImport } from './routes/_authenticated/turmas'
+import { Route as AuthenticatedProvasExamIdRouteImport } from './routes/_authenticated/provas_.$examId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,6 +31,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedProvasRoute = AuthenticatedProvasRouteImport.update({
+  id: '/provas',
+  path: '/provas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedQuestoesRoute = AuthenticatedQuestoesRouteImport.update({
   id: '/questoes',
   path: '/questoes',
@@ -39,39 +46,54 @@ const AuthenticatedTurmasRoute = AuthenticatedTurmasRouteImport.update({
   path: '/turmas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProvasExamIdRoute =
+  AuthenticatedProvasExamIdRouteImport.update({
+    id: '/provas_/$examId',
+    path: '/provas/$examId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/provas': typeof AuthenticatedProvasRoute
   '/questoes': typeof AuthenticatedQuestoesRoute
   '/turmas': typeof AuthenticatedTurmasRoute
+  '/provas/$examId': typeof AuthenticatedProvasExamIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/provas': typeof AuthenticatedProvasRoute
   '/questoes': typeof AuthenticatedQuestoesRoute
   '/turmas': typeof AuthenticatedTurmasRoute
+  '/provas/$examId': typeof AuthenticatedProvasExamIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/provas': typeof AuthenticatedProvasRoute
   '/_authenticated/questoes': typeof AuthenticatedQuestoesRoute
   '/_authenticated/turmas': typeof AuthenticatedTurmasRoute
+  '/_authenticated/provas_/$examId': typeof AuthenticatedProvasExamIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/questoes' | '/turmas'
+  fullPaths:
+    '/' | '/auth' | '/provas' | '/questoes' | '/turmas' | '/provas/$examId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/questoes' | '/turmas'
+  to: '/' | '/auth' | '/provas' | '/questoes' | '/turmas' | '/provas/$examId'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/provas'
     | '/_authenticated/questoes'
     | '/_authenticated/turmas'
+    | '/_authenticated/provas_/$examId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -103,6 +125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/provas': {
+      id: '/_authenticated/provas'
+      path: '/provas'
+      fullPath: '/provas'
+      preLoaderRoute: typeof AuthenticatedProvasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/questoes': {
       id: '/_authenticated/questoes'
       path: '/questoes'
@@ -117,17 +146,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTurmasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/provas_/$examId': {
+      id: '/_authenticated/provas_/$examId'
+      path: '/provas/$examId'
+      fullPath: '/provas/$examId'
+      preLoaderRoute: typeof AuthenticatedProvasExamIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedProvasRoute: typeof AuthenticatedProvasRoute
   AuthenticatedQuestoesRoute: typeof AuthenticatedQuestoesRoute
   AuthenticatedTurmasRoute: typeof AuthenticatedTurmasRoute
+  AuthenticatedProvasExamIdRoute: typeof AuthenticatedProvasExamIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedProvasRoute: AuthenticatedProvasRoute,
   AuthenticatedQuestoesRoute: AuthenticatedQuestoesRoute,
   AuthenticatedTurmasRoute: AuthenticatedTurmasRoute,
+  AuthenticatedProvasExamIdRoute: AuthenticatedProvasExamIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
