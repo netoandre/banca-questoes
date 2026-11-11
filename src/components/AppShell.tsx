@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { BookOpen, LogOut, Users } from "lucide-react";
+import { BookOpen, FileText, LogOut, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const links = [
+  { to: "/provas", label: "Provas", icon: FileText },
   { to: "/questoes", label: "Questões", icon: BookOpen },
   { to: "/turmas", label: "Turmas", icon: Users },
 ] as const;
@@ -27,7 +28,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <nav className="flex flex-1 gap-1">
             {links.map((l) => (
-              <Link key={l.to} to={l.to}
+              <Link key={l.to} to={l.to} aria-label={l.label} title={l.label}
                 className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent"
                 activeProps={{ className: "bg-sidebar-accent text-sidebar-foreground" }}>
                 <l.icon className="h-4 w-4" /><span className="hidden sm:inline">{l.label}</span>

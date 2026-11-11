@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- Keep exam assembly and version generation on authenticated routes using the existing owner-scoped data queries, so a teacher's evaluations remain private.
+- Store generated question content and answer keys together in exam_versions.items as snapshots, so later question edits do not change saved versions.
+- Keep exam draft selection in a shared ExamEditor and generation validation in a pure helper, so creation, editing, and rule tests share the same behavior.

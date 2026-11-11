@@ -84,7 +84,7 @@ export function versionToText(title: string, header: string, label: string, item
 }
 
 export function answerKeyText(items: VersionItem[]) {
-  return items.map((it) => `${it.number}: ${it.type === "objective" ? it.correct_letter ?? "?" : "dissertativa"} (peso ${it.weight})`).join("\n");
+  return items.map((it) => `${it.number}: ${it.type === "objective" ? it.correct_letter ?? "?" : `dissertativa${it.answer_key ? ` — ${it.answer_key}` : " — resposta esperada não informada"}`} (peso ${it.weight})`).join("\n");
 }
 
 export async function copyRich(html: string, text: string) {
