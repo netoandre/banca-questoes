@@ -111,7 +111,7 @@ function Questoes() {
   );
 }
 
-export function QuestionCard({ q, actions }: { q: Question; actions?: React.ReactNode }) {
+function QuestionCard({ q, actions }: { q: Question; actions?: React.ReactNode }) {
   return (
     <div className="paper p-4">
       <div className="flex items-start gap-3">

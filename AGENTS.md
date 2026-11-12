@@ -32,3 +32,5 @@ use the editor.
 - Keep exam assembly and version generation on authenticated routes using the existing owner-scoped data queries, so a teacher's evaluations remain private.
 - Store generated question content and answer keys together in exam_versions.items as snapshots, so later question edits do not change saved versions.
 - Keep exam draft selection in a shared ExamEditor and generation validation in a pure helper, so creation, editing, and rule tests share the same behavior.
+- Keep route-only components unexported so automatic route splitting can isolate their modules.
+- Recover dynamic module fetch failures with a session-scoped, time-bounded full reload; ordinary errors retain router retry so failures cannot cause reload loops.
