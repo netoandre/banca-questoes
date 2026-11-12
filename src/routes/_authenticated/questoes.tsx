@@ -65,9 +65,9 @@ function Questoes() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold text-ink">Banco de questões</h1>
-        <div className="flex gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <h1 className="min-w-0 truncate text-3xl font-bold text-ink">Banco de questões</h1>
+        <div className="flex min-w-0 flex-wrap gap-2">
           <Button variant="outline" onClick={() => setAiOpen(true)}><Sparkles className="h-4 w-4" /> Criar com IA</Button>
           <Button variant="outline" onClick={() => setImportOpen(true)}><ClipboardPaste className="h-4 w-4" /> Colar questões</Button>
           <Button onClick={() => setEditing({ draft: emptyDraft() })}><Plus className="h-4 w-4" /> Nova</Button>
