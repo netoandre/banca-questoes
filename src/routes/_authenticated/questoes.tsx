@@ -226,7 +226,7 @@ function AiDialog({ open, onOpenChange, onReady }: { open: boolean; onOpenChange
         <DialogHeader><DialogTitle>Criar questão com IA</DialogTitle></DialogHeader>
         <div className="space-y-3">
           {seg(["objective", "subjective"] as const, type, setType, (x) => (x === "objective" ? "Objetiva" : "Subjetiva"))}
-          {seg(["fácil", "média", "difícil"] as const, difficulty, setDifficulty, (x) => x[0].toUpperCase() + x.slice(1))}
+          {seg(["fácil", "média", "difícil"] as const, difficulty, setDifficulty, (x) => x.charAt(0).toUpperCase() + x.slice(1))}
           <Textarea rows={5} placeholder={"Tema geral ou instrução. Ex.: Revolução Francesa, causas econômicas; questão com interpretação de um trecho curto."} value={topic} onChange={(e) => setTopic(e.target.value)} />
           <p className="text-xs text-muted-foreground">As tags são sugeridas pela IA; você pode ajustar antes de salvar.</p>
         </div>
