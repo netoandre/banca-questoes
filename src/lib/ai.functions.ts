@@ -58,3 +58,19 @@ function clean(q: ParsedQuestion): ParsedQuestion {
   const ci = typeof q.correct_index === "number" && q.correct_index >= 0 && q.correct_index < options.length ? q.correct_index : null;
   return { type, statement: String(q.statement ?? ""), options: type === "objective" ? options : [], correct_index: type === "objective" ? ci : null, answer_key: String(q.answer_key ?? "") };
 }
+
+export const generateQuestion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { type: "objective" | "subjective"; difficulty: "fácil" | "média" | "difícil"; topic: string }) => {
+    if (!d.topic?.trim() || d.topic.length > 4000) throw new Error("Informe o tema ou instrução");
+    return d;
+  })
+  .handler(async ({ data }) => {
+    const json = (await askJson(
+      `You write one original exam question in Brazilian Portuguese. Type: ${data.type}. Difficulty: ${data.difficulty}. Objective questions have 4 or 5 clearly distinct alternatives with exactly one correct; subjective questions include the expected answer in answer_key. Also suggest 1 to 4 short lowercase tags (subject/topic) in Portuguese. Respond as {"question":{...},"tags":string[]}. ${SHAPE}`,
+      `Tema / instrução: ${data.topic}`,
+    )) as { question?: ParsedQuestion; tags?: unknown };
+    if (!json.question) throw new Error("A IA não retornou uma questão");
+    const tags = Array.isArray(json.tags) ? json.tags.map((t) => String(t).trim().toLowerCase()).filter(Boolean).slice(0, 4) : [];
+    return { question: clean({ ...json.question, type: data.type }), tags };
+  });

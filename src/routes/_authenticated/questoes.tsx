@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { must, questionsQuery } from "@/lib/data";
 import { LETTERS, type Question } from "@/lib/exam";
-import { adaptQuestion, parseQuestions } from "@/lib/ai.functions";
+import { adaptQuestion, generateQuestion, parseQuestions } from "@/lib/ai.functions";
 import { QuestionEditor, emptyDraft, type Draft } from "@/components/QuestionEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,7 @@ function Questoes() {
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [editing, setEditing] = useState<{ id?: string; draft: Draft; extra?: Partial<{ adapted: boolean; source_id: string }> } | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const [adaptingId, setAdaptingId] = useState<string | null>(null);
   const adaptFn = useServerFn(adaptQuestion);
 
@@ -67,6 +68,7 @@ function Questoes() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold text-ink">Banco de questões</h1>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setAiOpen(true)}><Sparkles className="h-4 w-4" /> Criar com IA</Button>
           <Button variant="outline" onClick={() => setImportOpen(true)}><ClipboardPaste className="h-4 w-4" /> Colar questões</Button>
           <Button onClick={() => setEditing({ draft: emptyDraft() })}><Plus className="h-4 w-4" /> Nova</Button>
         </div>
@@ -103,6 +105,7 @@ function Questoes() {
           <DialogFooter><Button onClick={() => save.mutate()} disabled={save.isPending || !editing?.draft.statement.trim()}>Salvar</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+      <AiDialog open={aiOpen} onOpenChange={setAiOpen} onReady={(draft) => { setAiOpen(false); setEditing({ draft }); }} />
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} onDone={refresh} />
     </div>
   );
@@ -193,6 +196,41 @@ function ImportDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
             <Button onClick={saveAll} disabled={busy || drafts.length === 0}>Salvar todas</Button>
           )}
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AiDialog({ open, onOpenChange, onReady }: { open: boolean; onOpenChange: (o: boolean) => void; onReady: (d: Draft) => void }) {
+  const genFn = useServerFn(generateQuestion);
+  const [type, setType] = useState<"objective" | "subjective">("objective");
+  const [difficulty, setDifficulty] = useState<"fácil" | "média" | "difícil">("média");
+  const [topic, setTopic] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function run() {
+    setBusy(true);
+    try {
+      const { question, tags } = await genFn({ data: { type, difficulty, topic } });
+      onReady({ ...question, weight: 1, tags: [...new Set([...tags, "ia"])] });
+      toast.success("Questão criada — revise e salve");
+    } catch { toast.error("Não foi possível criar a questão agora. Tente novamente."); }
+    setBusy(false);
+  }
+  const seg = <T extends string>(opts: readonly T[], v: T, set: (x: T) => void, label: (x: T) => string) => (
+    <div className="flex rounded-md border p-0.5">{opts.map((o) => (
+      <button key={o} type="button" onClick={() => set(o)} className={`flex-1 rounded px-3 py-1 text-sm ${v === o ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{label(o)}</button>))}</div>
+  );
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader><DialogTitle>Criar questão com IA</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          {seg(["objective", "subjective"] as const, type, setType, (x) => (x === "objective" ? "Objetiva" : "Subjetiva"))}
+          {seg(["fácil", "média", "difícil"] as const, difficulty, setDifficulty, (x) => x[0].toUpperCase() + x.slice(1))}
+          <Textarea rows={5} placeholder={"Tema geral ou instrução. Ex.: Revolução Francesa, causas econômicas; questão com interpretação de um trecho curto."} value={topic} onChange={(e) => setTopic(e.target.value)} />
+          <p className="text-xs text-muted-foreground">As tags são sugeridas pela IA; você pode ajustar antes de salvar.</p>
+        </div>
+        <DialogFooter><Button onClick={run} disabled={busy || !topic.trim()}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Gerar questão</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
