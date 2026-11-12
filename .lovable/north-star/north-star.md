@@ -2,7 +2,7 @@
 
 # Estrela-guia
 
-Professores aplicam às suas turmas provas prontas e justas, que todo aluno consegue fazer.
+Professores gerenciam seu banco de questões e vários tipos de prova, facilitando a entrega e a posterior correção.
 
 ## Métrica
 
