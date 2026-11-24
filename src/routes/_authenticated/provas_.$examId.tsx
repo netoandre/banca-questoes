@@ -9,6 +9,7 @@ import { answerKeyText, copyRich, LETTERS, versionToHtml, versionToText } from "
 import { generateExamVersions } from "@/lib/exam-generation";
 import { ExamEditor, type ExamDraft } from "@/components/ExamEditor";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -28,13 +29,14 @@ function ExamDetail() {
   const [draft, setDraft] = useState<ExamDraft | null>(null);
   const [count, setCount] = useState(2); const [activeId, setActiveId] = useState("");
   const [showKey, setShowKey] = useState(false);
+  const [orderByWeight, setOrderByWeight] = useState(exam.order_by_weight);
   const active = versions.find(v => v.id === activeId) ?? versions[0];
   const c = classes.find(c => c.id === exam.class_id);
-  const update = useMutation({ mutationFn: async () => { if (!draft) return; must(await supabase.from("exams").update({ ...draft, title: draft.title.trim() }).eq("id", examId)); }, onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ["exam", examId] }), qc.invalidateQueries({ queryKey: ["exams"] })]); setDraft(null); toast.success("Prova atualizada"); }, onError: e => toast.error(e.message) });
+  const update = useMutation({ mutationFn: async () => { if (!draft) return; must(await supabase.from("exams").update({ ...draft, title: draft.title.trim() }).eq("id", examId)); }, onSuccess: async () => { if (draft) setOrderByWeight(draft.order_by_weight); await Promise.all([qc.invalidateQueries({ queryKey: ["exam", examId] }), qc.invalidateQueries({ queryKey: ["exams"] })]); setDraft(null); toast.success("Prova atualizada"); }, onError: e => toast.error(e.message) });
   const generate = useMutation({
     mutationFn: async () => {
       const labels = Array.from({ length: count }, (_, i) => `${LETTERS[i]}${versions.length ? ` · lote ${versions.length + 1}` : ""}`);
-      const rows = generateExamVersions(examId, exam.question_ids, questions, labels);
+      const rows = generateExamVersions(examId, exam.question_ids, questions, labels, { weights: exam.question_weights, orderByWeight });
       return must(await supabase.from("exam_versions").insert(rows.map(row => ({ ...row, items: row.items.map(item => ({ ...item })) }))).select("*")) as unknown as VersionRow[];
     },
     onSuccess: async rows => { await qc.invalidateQueries({ queryKey: ["versions", examId] }); setActiveId(rows[0]?.id ?? ""); setShowKey(false); toast.success("Versões e gabaritos salvos"); },
@@ -50,8 +52,16 @@ function ExamDetail() {
   }
   return <div>
     <Button asChild variant="ghost" size="sm" className="mb-4"><Link to="/provas"><ArrowLeft /> Provas</Link></Button>
-    <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h1 className="break-words text-3xl font-bold text-ink">{exam.title}</h1><p className="mt-1 text-sm text-muted-foreground">{c ? `${c.name} · ${c.semester}` : "Sem turma"} · {exam.question_ids.length} questões</p></div><Button variant="outline" onClick={() => setDraft({ title: exam.title, header: exam.header, class_id: exam.class_id, question_ids: exam.question_ids })}><Pencil /> Editar prova</Button></div>
-    <div className="mt-6 flex flex-wrap items-center gap-3 border-y py-4"><select aria-label="Quantidade de versões" className="h-9 rounded-md border bg-background px-3 text-sm" value={count} onChange={e => setCount(Number(e.target.value))}>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n} {n === 1 ? "versão" : "versões"}</option>)}</select><Button onClick={() => generate.mutate()} disabled={generate.isPending || exam.question_ids.length === 0}>{generate.isPending ? <Loader2 className="animate-spin" /> : <Shuffle />}{generate.isPending ? "Gerando…" : "Gerar versões"}</Button><span className="text-sm text-muted-foreground">{versions.length} versões salvas</span></div>
+    <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h1 className="break-words text-3xl font-bold text-ink">{exam.title}</h1><p className="mt-1 text-sm text-muted-foreground">{c ? `${c.name} · ${c.semester}` : "Sem turma"} · {exam.question_ids.length} questões</p></div><Button variant="outline" onClick={() => setDraft({ title: exam.title, header: exam.header, class_id: exam.class_id, question_ids: exam.question_ids, question_weights: exam.question_weights ?? {}, order_by_weight: exam.order_by_weight })}><Pencil /> Editar prova</Button></div>
+    <div className="mt-6 flex flex-wrap items-center gap-3 border-y py-4">
+      <select aria-label="Quantidade de versões" className="h-9 rounded-md border bg-background px-3 text-sm" value={count} onChange={e => setCount(Number(e.target.value))}>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n} {n === 1 ? "versão" : "versões"}</option>)}</select>
+      <label className="flex cursor-pointer items-center gap-2 text-sm">
+        <Checkbox checked={orderByWeight} onCheckedChange={v => setOrderByWeight(Boolean(v))} />
+        <span>Organizar por peso</span>
+      </label>
+      <Button onClick={() => generate.mutate()} disabled={generate.isPending || exam.question_ids.length === 0}>{generate.isPending ? <Loader2 className="animate-spin" /> : <Shuffle />}{generate.isPending ? "Gerando…" : "Gerar versões"}</Button>
+      <span className="text-sm text-muted-foreground">{versions.length} versões salvas</span>
+    </div>
     {active ? <>
       <Tabs className="mt-5" value={active.id} onValueChange={setActiveId}><TabsList className="h-auto max-w-full flex-wrap justify-start gap-1">{versions.map(v => <TabsTrigger key={v.id} value={v.id}>Prova {v.label}</TabsTrigger>)}</TabsList></Tabs>
       <div className="my-4 flex flex-wrap gap-2"><Button variant={showKey ? "default" : "outline"} onClick={() => setShowKey(s => !s)}><KeyRound />{showKey ? "Ocultar gabarito" : "Ver gabarito"}</Button><Button variant="outline" onClick={() => copy(false)}><Copy /> Copiar para Word</Button><Button variant="ghost" onClick={() => copy(true)}><Copy /> Copiar gabarito</Button></div>

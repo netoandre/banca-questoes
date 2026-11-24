@@ -63,4 +63,26 @@ describe("buildVersion", () => {
   it("rejects deleted questions instead of silently omitting them", () => {
     expect(() => validateExamQuestions(["deleted"], qs)).toThrow();
   });
+
+  it("uses per-exam weights and orders ascending when orderByWeight is true", () => {
+    const weights = { a: 0.5, b: 2, c: 0.5, d: 1, s: 1, e: 2 };
+    for (let i = 0; i < 20; i++) {
+      const v = buildVersion(qs, { weights, orderByWeight: true });
+      expect(v.map((x) => x.weight)).toEqual([0.5, 0.5, 1, 1, 2, 2]);
+    }
+  });
+
+  it("allows free shuffling across weights when orderByWeight is false", () => {
+    const weights = { a: 0.5, b: 1, c: 2, d: 3, s: 4, e: 5 };
+    let sawNonAscending = false;
+    for (let i = 0; i < 30; i++) {
+      const v = buildVersion(qs, { weights, orderByWeight: false });
+      const ws = v.map((x) => x.weight);
+      if (ws.some((w, idx) => idx > 0 && w < (ws[idx - 1] ?? 0))) {
+        sawNonAscending = true;
+        break;
+      }
+    }
+    expect(sawNonAscending).toBe(true);
+  });
 });

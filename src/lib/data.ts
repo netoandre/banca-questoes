@@ -3,7 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Question, VersionItem } from "./exam";
 
 export interface ClassRow { id: string; name: string; semester: string }
-export interface ExamRow { id: string; title: string; header: string; class_id: string | null; question_ids: string[]; created_at: string }
+export interface ExamRow {
+  id: string;
+  title: string;
+  header: string;
+  class_id: string | null;
+  question_ids: string[];
+  question_weights: Record<string, number>;
+  order_by_weight: boolean;
+  created_at: string;
+}
 export interface VersionRow { id: string; exam_id: string; label: string; items: VersionItem[]; created_at: string }
 
 function must<T>(r: { data: T | null; error: { message: string } | null }): T {

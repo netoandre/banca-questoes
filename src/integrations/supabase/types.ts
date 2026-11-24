@@ -79,7 +79,9 @@ export type Database = {
           created_at: string
           header: string
           id: string
+          order_by_weight: boolean
           question_ids: string[]
+          question_weights: Json
           title: string
           user_id: string
         }
@@ -88,7 +90,9 @@ export type Database = {
           created_at?: string
           header?: string
           id?: string
+          order_by_weight?: boolean
           question_ids?: string[]
+          question_weights?: Json
           title: string
           user_id?: string
         }
@@ -97,7 +101,9 @@ export type Database = {
           created_at?: string
           header?: string
           id?: string
+          order_by_weight?: boolean
           question_ids?: string[]
+          question_weights?: Json
           title?: string
           user_id?: string
         }

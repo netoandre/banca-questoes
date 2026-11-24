@@ -8,6 +8,13 @@
       "when": 1794328933034,
       "tag": "0000_create_exam_manager",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795548990713,
+      "tag": "0001_exam_question_weights_and_ordering",
+      "breakpoints": true
     }
   ]
 }

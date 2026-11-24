@@ -33,18 +33,38 @@ export function shuffle<T>(arr: T[], rand: () => number = Math.random): T[] {
 }
 
 /**
- * Builds one exam version: objective questions first, then subjective.
- * Within each type, questions are grouped by weight (lowest first) so equal weights
- * stay together; order inside each group and the alternatives are shuffled.
+ * Builds one exam version. When orderByWeight is true (default), questions are
+ * grouped by weight ascending (objectives before subjectives within the same
+ * weight) and shuffled within each group. When false, all questions are shuffled.
+ * Objective alternatives are always shuffled.
  */
-export function buildVersion(questions: Question[], rand: () => number = Math.random): VersionItem[] {
+export interface BuildVersionOptions {
+  rand?: () => number;
+  weights?: Record<string, number>;
+  orderByWeight?: boolean;
+}
+
+export function questionWeight(q: Question, weights?: Record<string, number>): number {
+  const w = weights?.[q.id];
+  return typeof w === "number" && Number.isFinite(w) && w > 0 ? w : (Number(q.weight) || 1);
+}
+
+export function buildVersion(questions: Question[], options: BuildVersionOptions = {}): VersionItem[] {
+  const { rand = Math.random, weights, orderByWeight = true } = options;
   const ordered: Question[] = [];
-  for (const type of ["objective", "subjective"] as const) {
-    const ofType = questions.filter((q) => q.type === type);
-    const weights = [...new Set(ofType.map((q) => Number(q.weight)))].sort((a, b) => a - b);
-    for (const w of weights) ordered.push(...shuffle(ofType.filter((q) => Number(q.weight) === w), rand));
+  if (orderByWeight) {
+    const distinctWeights = [...new Set(questions.map((q) => questionWeight(q, weights)))].sort((a, b) => a - b);
+    for (const w of distinctWeights) {
+      const ofWeight = questions.filter((q) => questionWeight(q, weights) === w);
+      for (const type of ["objective", "subjective"] as const) {
+        ordered.push(...shuffle(ofWeight.filter((q) => q.type === type), rand));
+      }
+    }
+  } else {
+    ordered.push(...shuffle(questions, rand));
   }
   return ordered.map((q, i) => {
+    const weight = questionWeight(q, weights);
     if (q.type === "objective") {
       const idx = shuffle(q.options.map((_, k) => k), rand);
       const pos = q.correct_index == null ? -1 : idx.indexOf(q.correct_index);
@@ -52,12 +72,12 @@ export function buildVersion(questions: Question[], rand: () => number = Math.ra
         number: i + 1, question_id: q.id, type: q.type, statement: q.statement,
         options: idx.map((k) => q.options[k] ?? ""),
         correct_letter: pos >= 0 ? (LETTERS[pos] ?? null) : null,
-        answer_key: q.answer_key, weight: Number(q.weight),
+        answer_key: q.answer_key, weight,
       };
     }
     return {
       number: i + 1, question_id: q.id, type: q.type, statement: q.statement, options: [],
-      correct_letter: null, answer_key: q.answer_key, weight: Number(q.weight),
+      correct_letter: null, answer_key: q.answer_key, weight,
     };
   });
 }

@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/questoes")({
   component: Questoes,
 });
 
-const toDraft = (q: Question): Draft => ({ type: q.type, statement: q.statement, options: q.options, correct_index: q.correct_index, answer_key: q.answer_key, weight: Number(q.weight), tags: q.tags });
+const toDraft = (q: Question): Draft => ({ type: q.type, statement: q.statement, options: q.options, correct_index: q.correct_index, answer_key: q.answer_key, tags: q.tags });
 
 function Questoes() {
   const { data: questions } = useSuspenseQuery(questionsQuery);
@@ -57,7 +57,7 @@ function Questoes() {
     setAdaptingId(q.id);
     try {
       const { question } = await adaptFn({ data: { question: toDraft(q) } });
-      setEditing({ draft: { ...question, weight: Number(q.weight), tags: [...new Set([...q.tags, "adaptada"])] }, extra: { adapted: true, source_id: q.id } });
+      setEditing({ draft: { ...question, tags: [...new Set([...q.tags, "adaptada"])] }, extra: { adapted: true, source_id: q.id } });
       toast.success("Versão adaptada pronta — revise e salve");
     } catch { toast.error("Não foi possível adaptar agora. Tente novamente."); }
     setAdaptingId(null);
@@ -81,7 +81,7 @@ function Questoes() {
         <div className="mt-3 flex flex-wrap gap-1.5">
           {allTags.map((t) => (
             <button key={t} onClick={() => setTagFilter((f) => f.includes(t) ? f.filter((x) => x !== t) : [...f, t])}
-              className={`rounded-full border px-2.5 py-0.5 text-xs ${tagFilter.includes(t) ? "border-accent bg-accent text-accent-foreground" : "bg-paper text-muted-foreground"}`}>#{t}</button>
+              className={`max-w-full break-all rounded-full border px-2.5 py-0.5 text-left text-xs ${tagFilter.includes(t) ? "border-accent bg-accent text-accent-foreground" : "bg-paper text-muted-foreground"}`}>#{t}</button>
           ))}
         </div>
       )}
@@ -114,24 +114,23 @@ function Questoes() {
 function QuestionCard({ q, actions }: { q: Question; actions?: React.ReactNode }) {
   return (
     <div className="paper p-4">
-      <div className="flex items-start gap-3">
-        <div className="flex-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap gap-1.5 text-xs">
             <span className="rounded bg-secondary px-1.5 py-0.5">{q.type === "objective" ? "Objetiva" : "Subjetiva"}</span>
-            <span className="rounded bg-secondary px-1.5 py-0.5">Peso {String(q.weight).replace(".", ",")}</span>
             {q.adapted && <span className="rounded bg-accent px-1.5 py-0.5 text-accent-foreground">Adaptada</span>}
-            {q.tags.map((t) => <span key={t} className="text-muted-foreground">#{t}</span>)}
+            {q.tags.map((t) => <span key={t} className="max-w-full break-all text-muted-foreground">#{t}</span>)}
           </div>
-          <p className="whitespace-pre-wrap font-serif">{q.statement}</p>
+          <p className="whitespace-pre-wrap break-words font-serif">{q.statement}</p>
           {q.options.length > 0 && (
             <ol className="mt-2 space-y-0.5 text-sm">
               {q.options.map((o, i) => (
-                <li key={i} className={i === q.correct_index ? "font-semibold text-success" : ""}>{LETTERS[i]}) {o}</li>
+                <li key={i} className={`break-words ${i === q.correct_index ? "font-semibold text-success" : ""}`}>{LETTERS[i]}) {o}</li>
               ))}
             </ol>
           )}
         </div>
-        {actions && <div className="flex shrink-0">{actions}</div>}
+        {actions && <div className="flex shrink-0 flex-wrap items-center justify-end gap-1 border-t pt-2 sm:border-t-0 sm:pt-0">{actions}</div>}
       </div>
     </div>
   );
@@ -141,7 +140,6 @@ function ImportDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
   const parseFn = useServerFn(parseQuestions);
   const [text, setText] = useState("");
   const [tags, setTags] = useState("");
-  const [weight, setWeight] = useState(1);
   const [drafts, setDrafts] = useState<Draft[] | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -150,7 +148,7 @@ function ImportDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
     try {
       const { questions } = await parseFn({ data: { text } });
       const tagList = tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
-      setDrafts(questions.map((q) => ({ ...q, weight, tags: tagList })));
+      setDrafts(questions.map((q) => ({ ...q, tags: tagList })));
       if (questions.length === 0) toast.error("Nenhuma questão identificada");
     } catch { toast.error("Não foi possível ler as questões. Tente novamente."); }
     setBusy(false);
@@ -174,7 +172,6 @@ function ImportDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
             <Textarea rows={14} placeholder={"Cole aqui as questões, alternativas e gabarito em qualquer formato.\n\n1) Qual é...\na) ...\nb) ...\n\nGabarito: 1-B"} value={text} onChange={(e) => setText(e.target.value)} className="font-serif" />
             <div className="flex flex-wrap gap-2">
               <Input placeholder="Tags para todas (separe por vírgula)" value={tags} onChange={(e) => setTags(e.target.value)} className="flex-1" />
-              <Input type="number" step="0.5" value={weight} onChange={(e) => setWeight(Number(e.target.value))} className="w-24" aria-label="Peso" />
             </div>
           </div>
         ) : (
@@ -211,7 +208,7 @@ function AiDialog({ open, onOpenChange, onReady }: { open: boolean; onOpenChange
     setBusy(true);
     try {
       const { question, tags } = await genFn({ data: { type, difficulty, topic } });
-      onReady({ ...question, weight: 1, tags: [...new Set([...tags, "ia"])] });
+      onReady({ ...question, tags: [...new Set([...tags, "ia"])] });
       toast.success("Questão criada — revise e salve");
     } catch { toast.error("Não foi possível criar a questão agora. Tente novamente."); }
     setBusy(false);

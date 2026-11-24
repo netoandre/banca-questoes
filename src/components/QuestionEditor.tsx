@@ -12,7 +12,6 @@ export interface Draft {
   options: string[];
   correct_index: number | null;
   answer_key: string;
-  weight: number;
   tags: string[];
 }
 
@@ -35,8 +34,6 @@ export function QuestionEditor({ value, onChange }: { value: Draft; onChange: (d
             </button>
           ))}
         </div>
-        <div className="w-24"><Label className="text-xs">Peso</Label>
-          <Input type="number" step="0.5" min="0" value={value.weight} onChange={(e) => set({ weight: Number(e.target.value) })} /></div>
       </div>
       <div><Label className="text-xs">Enunciado</Label>
         <Textarea rows={5} value={value.statement} onChange={(e) => set({ statement: e.target.value })} className="font-serif text-base" /></div>
@@ -77,4 +74,4 @@ export function QuestionEditor({ value, onChange }: { value: Draft; onChange: (d
   );
 }
 
-export const emptyDraft = (): Draft => ({ type: "objective", statement: "", options: ["", "", "", ""], correct_index: null, answer_key: "", weight: 1, tags: [] });
+export const emptyDraft = (): Draft => ({ type: "objective", statement: "", options: ["", "", "", ""], correct_index: null, answer_key: "", tags: [] });

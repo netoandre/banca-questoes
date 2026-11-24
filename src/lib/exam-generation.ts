@@ -1,4 +1,4 @@
-import { buildVersion, type Question } from "./exam";
+import { buildVersion, type BuildVersionOptions, type Question } from "./exam";
 
 export function validateExamQuestions(ids: string[], questions: Question[]): Question[] {
   if (ids.length === 0) throw new Error("Selecione ao menos uma questão.");
@@ -10,7 +10,13 @@ export function validateExamQuestions(ids: string[], questions: Question[]): Que
   });
 }
 
-export function generateExamVersions(examId: string, ids: string[], questions: Question[], labels: string[]) {
+export function generateExamVersions(
+  examId: string,
+  ids: string[],
+  questions: Question[],
+  labels: string[],
+  options?: Pick<BuildVersionOptions, "weights" | "orderByWeight">,
+) {
   const selected = validateExamQuestions(ids, questions);
-  return labels.map(label => ({ exam_id: examId, label, items: buildVersion(selected) }));
+  return labels.map(label => ({ exam_id: examId, label, items: buildVersion(selected, options) }));
 }
