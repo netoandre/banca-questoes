@@ -1,3 +1,7 @@
+# Tags existentes
+- [x] Buscar e selecionar tags no cadastro, na importação e na criação com IA.
+- [x] Verificar seleção nos três formulários e persistência no cadastro em uma conta autenticada, incluindo celular sem transbordamento.
+
 # Área de provas
 - [x] Cadastrar e editar provas por turma, selecionando questões e tags.
 - [x] Gerar e guardar versões embaralhadas com gabaritos e cópia para Word.

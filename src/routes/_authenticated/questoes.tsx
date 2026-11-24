@@ -10,7 +10,7 @@ import { LETTERS, type Question } from "@/lib/exam";
 import { adaptQuestion, generateQuestion, parseQuestions } from "@/lib/ai.functions";
 import { QuestionEditor, emptyDraft, type Draft } from "@/components/QuestionEditor";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { TagSelector } from "@/components/TagSelector";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -101,12 +101,12 @@ function Questoes() {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader><DialogTitle>{editing?.id ? "Editar questão" : editing?.extra?.adapted ? "Questão adaptada" : "Nova questão"}</DialogTitle></DialogHeader>
-          {editing && <QuestionEditor value={editing.draft} onChange={(draft) => setEditing({ ...editing, draft })} />}
+          {editing && <QuestionEditor value={editing.draft} onChange={(draft) => setEditing({ ...editing, draft })} existingTags={allTags} />}
           <DialogFooter><Button onClick={() => save.mutate()} disabled={save.isPending || !editing?.draft.statement.trim()}>Salvar</Button></DialogFooter>
         </DialogContent>
       </Dialog>
-      <AiDialog open={aiOpen} onOpenChange={setAiOpen} onReady={(draft) => { setAiOpen(false); setEditing({ draft }); }} />
-      <ImportDialog open={importOpen} onOpenChange={setImportOpen} onDone={refresh} />
+      <AiDialog open={aiOpen} onOpenChange={setAiOpen} existingTags={allTags} onReady={(draft) => { setAiOpen(false); setEditing({ draft }); }} />
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} existingTags={allTags} onDone={refresh} />
     </div>
   );
 }
@@ -136,10 +136,10 @@ function QuestionCard({ q, actions }: { q: Question; actions?: React.ReactNode }
   );
 }
 
-function ImportDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenChange: (o: boolean) => void; onDone: () => void }) {
+function ImportDialog({ open, onOpenChange, onDone, existingTags }: { open: boolean; onOpenChange: (o: boolean) => void; onDone: () => void; existingTags: string[] }) {
   const parseFn = useServerFn(parseQuestions);
   const [text, setText] = useState("");
-  const [tags, setTags] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [drafts, setDrafts] = useState<Draft[] | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -147,8 +147,7 @@ function ImportDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
     setBusy(true);
     try {
       const { questions } = await parseFn({ data: { text } });
-      const tagList = tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
-      setDrafts(questions.map((q) => ({ ...q, tags: tagList })));
+      setDrafts(questions.map((q) => ({ ...q, tags: [...tags] })));
       if (questions.length === 0) toast.error("Nenhuma questão identificada");
     } catch { toast.error("Não foi possível ler as questões. Tente novamente."); }
     setBusy(false);
@@ -160,7 +159,7 @@ function ImportDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success(`${drafts.length} questões salvas`);
-    setDrafts(null); setText(""); onOpenChange(false); onDone();
+    setDrafts(null); setText(""); setTags([]); onOpenChange(false); onDone();
   }
 
   return (
@@ -170,9 +169,7 @@ function ImportDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
         {!drafts ? (
           <div className="space-y-3">
             <Textarea rows={14} placeholder={"Cole aqui as questões, alternativas e gabarito em qualquer formato.\n\n1) Qual é...\na) ...\nb) ...\n\nGabarito: 1-B"} value={text} onChange={(e) => setText(e.target.value)} className="font-serif" />
-            <div className="flex flex-wrap gap-2">
-              <Input placeholder="Tags para todas (separe por vírgula)" value={tags} onChange={(e) => setTags(e.target.value)} className="flex-1" />
-            </div>
+            <TagSelector label="Tags para todas as questões" value={tags} onChange={setTags} existingTags={existingTags} />
           </div>
         ) : (
           <div className="space-y-6">
@@ -180,7 +177,7 @@ function ImportDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
               <div key={i} className="rounded-md border p-4">
                 <div className="mb-2 flex justify-between text-sm font-semibold">Questão {i + 1}
                   <button className="text-destructive" onClick={() => setDrafts(drafts.filter((_, k) => k !== i))}>Descartar</button></div>
-                <QuestionEditor value={d} onChange={(nd) => setDrafts(drafts.map((x, k) => (k === i ? nd : x)))} />
+                <QuestionEditor value={d} onChange={(nd) => setDrafts(drafts.map((x, k) => (k === i ? nd : x)))} existingTags={[...new Set([...existingTags, ...drafts.flatMap((draft) => draft.tags)])]} />
               </div>
             ))}
           </div>
@@ -198,17 +195,19 @@ function ImportDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
   );
 }
 
-function AiDialog({ open, onOpenChange, onReady }: { open: boolean; onOpenChange: (o: boolean) => void; onReady: (d: Draft) => void }) {
+function AiDialog({ open, onOpenChange, onReady, existingTags }: { open: boolean; onOpenChange: (o: boolean) => void; onReady: (d: Draft) => void; existingTags: string[] }) {
   const genFn = useServerFn(generateQuestion);
   const [type, setType] = useState<"objective" | "subjective">("objective");
   const [difficulty, setDifficulty] = useState<"fácil" | "média" | "difícil">("média");
   const [topic, setTopic] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   async function run() {
     setBusy(true);
     try {
       const { question, tags } = await genFn({ data: { type, difficulty, topic } });
-      onReady({ ...question, tags: [...new Set([...tags, "ia"])] });
+      onReady({ ...question, tags: [...new Set([...selectedTags, ...tags, "ia"])] });
+      setSelectedTags([]);
       toast.success("Questão criada — revise e salve");
     } catch { toast.error("Não foi possível criar a questão agora. Tente novamente."); }
     setBusy(false);
@@ -219,13 +218,13 @@ function AiDialog({ open, onOpenChange, onReady }: { open: boolean; onOpenChange
   );
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader><DialogTitle>Criar questão com IA</DialogTitle></DialogHeader>
         <div className="space-y-3">
           {seg(["objective", "subjective"] as const, type, setType, (x) => (x === "objective" ? "Objetiva" : "Subjetiva"))}
           {seg(["fácil", "média", "difícil"] as const, difficulty, setDifficulty, (x) => x.charAt(0).toUpperCase() + x.slice(1))}
           <Textarea rows={5} placeholder={"Tema geral ou instrução. Ex.: Revolução Francesa, causas econômicas; questão com interpretação de um trecho curto."} value={topic} onChange={(e) => setTopic(e.target.value)} />
-          <p className="text-xs text-muted-foreground">As tags são sugeridas pela IA; você pode ajustar antes de salvar.</p>
+          <TagSelector value={selectedTags} onChange={setSelectedTags} existingTags={existingTags} />
         </div>
         <DialogFooter><Button onClick={run} disabled={busy || !topic.trim()}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Gerar questão</Button></DialogFooter>
       </DialogContent>

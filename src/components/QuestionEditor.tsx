@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { TagSelector } from "@/components/TagSelector";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { LETTERS, type QuestionType } from "@/lib/exam";
@@ -15,14 +14,8 @@ export interface Draft {
   tags: string[];
 }
 
-export function QuestionEditor({ value, onChange }: { value: Draft; onChange: (d: Draft) => void }) {
-  const [tag, setTag] = useState("");
+export function QuestionEditor({ value, onChange, existingTags = [] }: { value: Draft; onChange: (d: Draft) => void; existingTags?: string[] }) {
   const set = (p: Partial<Draft>) => onChange({ ...value, ...p });
-  const addTag = () => {
-    const t = tag.trim().toLowerCase();
-    if (t && !value.tags.includes(t)) set({ tags: [...value.tags, t] });
-    setTag("");
-  };
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
@@ -60,16 +53,7 @@ export function QuestionEditor({ value, onChange }: { value: Draft; onChange: (d
         <div><Label className="text-xs">Resposta esperada / critérios de correção</Label>
           <Textarea rows={3} value={value.answer_key} onChange={(e) => set({ answer_key: e.target.value })} /></div>
       )}
-      <div><Label className="text-xs">Tags</Label>
-        <div className="flex flex-wrap items-center gap-1.5 rounded-md border bg-background p-1.5">
-          {value.tags.map((t) => (
-            <span key={t} className="flex items-center gap-1 rounded bg-highlight px-2 py-0.5 text-xs">{t}
-              <button type="button" aria-label={`Remover ${t}`} onClick={() => set({ tags: value.tags.filter((x) => x !== t) })}><X className="h-3 w-3" /></button></span>
-          ))}
-          <input className="min-w-24 flex-1 bg-transparent px-1 text-sm outline-none" placeholder="Digite e Enter" value={tag}
-            onChange={(e) => setTag(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); } }} onBlur={addTag} />
-        </div>
-      </div>
+      <TagSelector value={value.tags} onChange={(tags) => set({ tags })} existingTags={existingTags} />
     </div>
   );
 }

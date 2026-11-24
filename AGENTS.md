@@ -34,3 +34,4 @@ use the editor.
 - Keep exam draft selection in a shared ExamEditor and generation validation in a pure helper, so creation, editing, and rule tests share the same behavior.
 - Keep route-only components unexported so automatic route splitting can isolate their modules.
 - Recover dynamic module fetch failures with a session-scoped, time-bounded full reload; ordinary errors retain router retry so failures cannot cause reload loops.
+- Reuse TagSelector in question editing, paste import, and AI creation, sourcing existing tags from the authenticated question query so selection stays consistent and private.
